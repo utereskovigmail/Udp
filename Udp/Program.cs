@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Text;
+using System.Collections.Generic;
 
 Console.InputEncoding = Encoding.UTF8; // Встановлюємо кодування для консолі
 Console.OutputEncoding = Encoding.UTF8; // Встановлюємо кодування для виводу в консоль
@@ -28,11 +29,41 @@ List<Product> products = new List<Product>()
 var udpClient = new UdpClient(1028); //0 - 65535 - 2 байти
 Console.WriteLine("UDP Server is running on port 1028...");
 
+
+int limitPerMinute = 4;
+Queue<DateTime> times = new Queue<DateTime>();
+
 while(true)
 {
+    DateTime now = DateTime.UtcNow;
+    
     //Очікуємо повідомлення від клієнта
     var result = await udpClient.ReceiveAsync();
     string text = Encoding.UTF8.GetString(result.Buffer); // отримуємо байти
+    
+    
+    if (times.Count < limitPerMinute)
+    {
+        times.Enqueue(now);
+    }
+    else
+    {
+        times.Dequeue(); 
+
+        TimeSpan diff = now - times.Peek();
+        if (diff.TotalSeconds <= 60)
+        {
+            Console.WriteLine("Too many requests per minute!");
+            
+            byte[] resp = Encoding.UTF8.GetBytes("Too many requests per minute!");
+            udpClient.Send(resp, result.RemoteEndPoint);
+            udpClient.Close();
+            break;
+        }
+        
+        times.Enqueue(now);
+    }
+    
     if (text.Trim().StartsWith("ShowAll"))
     {
         var names = products.Select(p => $"{p.Company} {p.Component}");

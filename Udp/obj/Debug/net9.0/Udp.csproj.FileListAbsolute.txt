@@ -12,3 +12,4 @@
 /Users/utereskovygmail.com/RiderProjects/SP/Udp/Udp/obj/Debug/net9.0/Udp.pdb
 /Users/utereskovygmail.com/RiderProjects/SP/Udp/Udp/obj/Debug/net9.0/Udp.genruntimeconfig.cache
 /Users/utereskovygmail.com/RiderProjects/SP/Udp/Udp/obj/Debug/net9.0/ref/Udp.dll
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/Udp/obj/Debug/net9.0/Udp.sourcelink.json
