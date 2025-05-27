@@ -1,0 +1,14 @@
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/bin/Debug/net9.0/UdpClient
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/bin/Debug/net9.0/UdpClient.deps.json
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/bin/Debug/net9.0/UdpClient.runtimeconfig.json
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/bin/Debug/net9.0/UdpClient.dll
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/bin/Debug/net9.0/UdpClient.pdb
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.GeneratedMSBuildEditorConfig.editorconfig
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.AssemblyInfoInputs.cache
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.AssemblyInfo.cs
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.csproj.CoreCompileInputs.cache
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.dll
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/refint/UdpClient.dll
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.pdb
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/UdpClient.genruntimeconfig.cache
+/Users/utereskovygmail.com/RiderProjects/SP/Udp/UdpClient/obj/Debug/net9.0/ref/UdpClient.dll
