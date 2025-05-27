@@ -1,13 +1,15 @@
-﻿using System.Net.Sockets;
+﻿using System.Collections.Concurrent;
+using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
-
-Console.InputEncoding = Encoding.UTF8; // Встановлюємо кодування для консолі
-Console.OutputEncoding = Encoding.UTF8; // Встановлюємо кодування для виводу в консоль
+using System.Net;
 
 
 
-List<Product> products = new List<Product>()
+
+class Program
+{
+    static List<Product> products = new List<Product>()
 {
     new Product("Intel", "CPU", 250.99m),
     new Product("AMD", "GPU", 399.50m),
@@ -26,65 +28,93 @@ List<Product> products = new List<Product>()
     new Product("Gigabyte", "Motherboard", 150.00m)
 };
 
-var udpClient = new UdpClient(1028); //0 - 65535 - 2 байти
-Console.WriteLine("UDP Server is running on port 1028...");
+static int limitPerMinute = 4;
+static Queue<DateTime> times = new Queue<DateTime>();
+static ConcurrentDictionary<IPEndPoint, DateTime> clientLastMessageTime = new();
 
-
-int limitPerMinute = 4;
-Queue<DateTime> times = new Queue<DateTime>();
-
-while(true)
+// Ліміт клієнтів
+static int maxNumberOfClients = 2;
+static async Task Main(string[] args)
 {
-    DateTime now = DateTime.UtcNow;
-    
-    //Очікуємо повідомлення від клієнта
-    var result = await udpClient.ReceiveAsync();
-    string text = Encoding.UTF8.GetString(result.Buffer); // отримуємо байти
-    
-    
-    if (times.Count < limitPerMinute)
-    {
-        times.Enqueue(now);
-    }
-    else
-    {
-        times.Dequeue(); 
+    int port = 1028;
+    using UdpClient udpClient = new UdpClient(port);
+    Console.WriteLine($"UDP Server is running on port {port}...");
 
-        TimeSpan diff = now - times.Peek();
-        if (diff.TotalSeconds <= 60)
+    int max_number_of_clients = 2;
+    
+    _ = Task.Run(() => CheckClientTimeoutsAsync(TimeSpan.FromSeconds(15), udpClient));
+    
+    
+    while (true)
+    {
+        var result = await udpClient.ReceiveAsync();
+
+        // Оновлюємо час останнього повідомлення цього клієнта
+        clientLastMessageTime[result.RemoteEndPoint] = DateTime.UtcNow;
+
+        if (clientLastMessageTime.Count > maxNumberOfClients)
         {
-            Console.WriteLine("Too many requests per minute!");
-            
-            byte[] resp = Encoding.UTF8.GetBytes("Too many requests per minute!");
-            udpClient.Send(resp, result.RemoteEndPoint);
-            udpClient.Close();
-            break;
+            string msg = "Too many clients connected.";
+            Console.WriteLine(msg);
+            await udpClient.SendAsync(Encoding.UTF8.GetBytes(msg), result.RemoteEndPoint);
+            continue; // не обробляємо повідомлення далі
         }
         
-        times.Enqueue(now);
+        _ = Task.Run(() => ProcessMessageAsync(result.Buffer, result.RemoteEndPoint, udpClient));
     }
-    
-    if (text.Trim().StartsWith("ShowAll"))
+}
+
+
+
+
+
+static async Task ProcessMessageAsync(byte[] data, IPEndPoint remoteEP, UdpClient udpClient)
+{
+    string text = Encoding.UTF8.GetString(data).Trim();
+
+    if (text.StartsWith("ShowAll", StringComparison.OrdinalIgnoreCase))
     {
         var names = products.Select(p => $"{p.Company} {p.Component}");
         string message = string.Join("\n", names);
-        udpClient.Send(Encoding.UTF8.GetBytes(message), result.RemoteEndPoint);
+        await udpClient.SendAsync(Encoding.UTF8.GetBytes(message), remoteEP);
     }
     else
     {
-        if (products.Find(p => p.Component == text) != null)
+        var product = products.Find(p => p.Component.Equals(text, StringComparison.OrdinalIgnoreCase));
+        if (product != null)
         {
-            var p = products.Find(p => p.Component == text);
-            string txt = p.Company + " " + p.Component + " --- " + p.Price;
-            udpClient.Send(Encoding.UTF8.GetBytes(txt), result.RemoteEndPoint);
+            string response = $"{product.Company} {product.Component} --- {product.Price}";
+            await udpClient.SendAsync(Encoding.UTF8.GetBytes(response), remoteEP);
         }
         else
         {
-            Console.WriteLine("Incorrect message");
-            udpClient.Send(Encoding.UTF8.GetBytes("Incorrect message"), result.RemoteEndPoint);
+            string response = "Incorrect message";
+            await udpClient.SendAsync(Encoding.UTF8.GetBytes(response), remoteEP);
         }
     }
-    // Console.WriteLine($"Отримали повідомлення: {text} від {result.RemoteEndPoint.Address}:{result.RemoteEndPoint.Port}");
+}
+
+static async Task CheckClientTimeoutsAsync(TimeSpan timeout, UdpClient udpClient)
+{
+    while (true)
+    {
+        var now = DateTime.UtcNow;
+        var timedOutClients = clientLastMessageTime.Where(kvp => now - kvp.Value > timeout).ToList();
+
+        foreach (var kvp in timedOutClients)
+        {
+            Console.WriteLine($"Client {kvp.Key} timed out.");
+            clientLastMessageTime.TryRemove(kvp.Key, out _);
+
+            string msg = "Too long without messages";
+            await udpClient.SendAsync(Encoding.UTF8.GetBytes(msg), kvp.Key);
+        }
+
+        await Task.Delay(1000); 
+    }
+}
+
+
 }
 
 
